@@ -2,6 +2,9 @@
 name = "bluegrep"
 version = "0.1.0"
 edition = "2024"
+description = "Search your iMessages from the terminal"
+repository = "https://github.com/yourname/bluegrep"
+license = "MIT"
 
 [dependencies]
 anstream = "1.0.0"
