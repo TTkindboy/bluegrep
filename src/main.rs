@@ -1,10 +1,11 @@
 use anstream::println;
+use anyhow::Context;
 use clap::Parser;
 use imessage_database::{
     error::table::TableError,
     tables::{
         messages::Message,
-        table::{get_connection, Table},
+        table::{Table, get_connection},
     },
     util::dirs::default_db_path,
 };
@@ -17,17 +18,25 @@ use regex::Regex;
 struct Args {
     /// Pattern to search for (regex supported)
     pattern: String,
+    #[arg(short = 'i', long)]
+    ignore_case: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    search(&args.pattern)?;
+    search(&args.pattern, args.ignore_case)?;
     Ok(())
 }
 
-fn search(pattern: &str) -> anyhow::Result<()> {
-    let re = Regex::new(pattern)?;
-    let db = get_connection(&default_db_path())?;
+fn search(pattern: &str, ignore_case: bool) -> anyhow::Result<()> {
+    let re = if ignore_case {
+        Regex::new(&format!("(?i){pattern}"))?
+    } else {
+        Regex::new(pattern)?
+    };
+
+    let db = get_connection(&default_db_path())
+        .context("Cannot open iMessage database — ensure full disk access is enabled for your terminal emulator in System Settings > Privacy & Security > Full Disk Access")?;
 
     Message::stream(&db, |msg| {
         if let Ok(mut msg) = msg {
